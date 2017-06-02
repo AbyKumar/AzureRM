@@ -14,7 +14,7 @@
   },
   "variables": {
     "template": {
-      "base": "https://raw.githubusercontent.com/marcvaneijk/arm/master/000-foundation/examples/nested-sharing-state/",
+      "base": "https://github.com/AbyKumar/AzureRM/blob/master/000-patterns/nested-sharing-state/",
       "nested1": "shared1.json",
       "nested2": "shared2.json"
     },
