@@ -1,0 +1,90 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "UserName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "Password": {
+      "type": "securestring"
+    }
+  },
+  "variables": {
+
+    "common": {
+      "template": {
+        "base": "https://raw.githubusercontent.com/marcvaneijk/arm/master/dc-storage-network/",
+        "shared": "shared.json",
+        "dc": "dc.json",
+        "s2d": "s2d.json"
+      },
+      "credentials": {
+        "username": "[parameters('UserName')]",
+        "password": "[parameters('Password')]"
+      },
+      "storageAccounts": {
+        "name": "[concat(uniqueString(resourceGroup().id), 'storage')]",
+        "type": "Standard_LRS"
+      },
+      "virtualNetworks": {
+        "vNetPrefix": "10.0.0.0/16",
+        "vnetSubnetName": "Subnet-1",
+        "vnetSubnetPrefix": "10.0.0.0/24"
+      },
+      "virtualMachines": {
+        "ImagePublisher": "MicrosoftWindowsServer",
+        "ImageOffer": "WindowsServer",
+        "dcVmSize": "Standard_D1",
+        "dcIpAddress": "10.0.0.100",
+        "s2dVmSize": "Standard_D1",
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'vnet')]"
+      }
+    },
+    "SubnetRef": "[concat(variables('common').virtualMachines.vnetID, '/subnets/', variables('common').virtualNetworks.vnetSubnetName)]"
+  },
+  "resources": [
+    {
+      "name": "shared",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(concat(variables('common').template.base, 'nested/'), variables('common').template.shared)]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "common": {
+            "value": "[variables('common')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "dc",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(concat(variables('common').template.base, 'nested/'), variables('common').template.dc)]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "common": {
+            "value": "[variables('common')]"
+          },
+          "subnetRef": {
+            "value": "[variables('SubnetRef')]"
+          }
+        }
+      }
+    }
+  ],
+
+  "outputs": { }
+}
